@@ -1,0 +1,246 @@
+
+
+<html>
+Here are some steps I took to install the openvpn server software on an inexpensive virtual server. One needs some basic Linux skills to download, setup and run scripts to install openVPN as a server and client. I used Ubuntu 14 and 15 since The firewall would not work on Centos.<P>
+
+
+<h1><strong>1. Setup a VPS Server</strong> </h1><P>
+
+Get a IPXcore’s $1.25 or $1.00 budget VPS server:
+
+<a href="https://ipxcore.com/budget-vps/" target="_blank">Budget VPS</a><P>
+
+I used Ubuntu 14.04 x86 and also 15.04 x86 64 on a $1.00 server<P>
+
+Turn on TUN/TAP at the control panel.
+<P>
+<h1><strong>2. Install the Open VPN server software </strong></h1><P>
+
+First thing to do is login to your server account using either putty or a ssh terminal.  You must run the following commands as <strong>root</strong>
+<br> 
+
+The first step is to do an update. I got some errors running apt-get and I found that some keys were missing on the VPS Ubuntu 14.04 (Ubuntu 15 is OK and does not need the following commands). I needed to run these commands on Ubuntu 14:
+
+<pre>
+apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 40976EAF437D05B5
+apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 3B4FE6ACC0B21F32
+</pre><p>
+
+Then do an update:<br>
+<pre>
+apt-get update 
+</pre>
+
+Download the openvpn install script:<br>
+<pre>
+wget https://git.io/vpn -O openvpn-install.sh 
+</pre>
+
+Or you can get it from my website:
+<pre>
+wget http://kd3su2.crabdance.com/openvpn-install.sh 
+</pre> <P>
+
+
+Change permissions of the script:
+<pre>
+chmod u+x ./openvpn-install.sh
+</pre>
+
+Now run the install script:
+<pre>
+./openvpn-install.sh
+</pre>
+
+
+This is what you will see when you run the ./openvpn-install.sh script. There are several questions it will ask, I was able to use the defaults:
+
+<b>
+<pre>
+
+Welcome to this quick OpenVPN "road warrior" installer
+
+I need to ask you a few questions before starting the setup
+You can leave the default options and just press enter if you are ok with them
+
+First I need to know the IPv4 address of the network interface you want OpenVPN
+listening to.
+IP address: 162.218.235.101
+
+What port do you want for OpenVPN?
+Port: 1194
+
+What DNS do you want to use with the VPN?
+   1) Current system resolvers
+   2) Google
+   3) OpenDNS
+   4) NTT
+   5) Hurricane Electric
+   6) Verisign
+DNS [1-6]: 1
+
+Finally, tell me your name for the client cert
+Please, use one word only, no special characters
+Client name: client
+
+Okay, that was all I needed. We are ready to setup your OpenVPN server now
+Press any key to continue...
+
+</pre>
+</b>
+<P>
+
+If everything went well, the openvpn should be up and running. In case you need to start/stop/restart the openvpn server here are the commands below.
+
+
+Type the following command stop the OpenVPN service:
+<pre>
+/etc/init.d/openvpn stop
+</pre>
+
+Type the following command start the OpenVPN service:
+
+<pre>
+/etc/init.d/openvpn start
+</pre>
+
+Type the following command restart the OpenVPN service:
+<pre>
+/etc/init.d/openvpn restart
+</pre>
+
+
+<h1><strong>3. Firewall setup as a service</strong></h1><P>
+
+<strong>As root, </strong>download the IRLP firewall file, use this command to download it directly to your server:
+
+<pre>
+ wget http://kd3su.crabdance.com/firewall
+</pre>
+
+Copy the firewall file to the init.d dir & make it executable:
+
+<pre>
+cp ./firewall /etc/init.d/firewall
+cd /etc/init.d
+chmod +x firewall
+</pre><P>
+
+Then run this command:
+<pre>
+update-rc.d -f firewall defaults
+</pre><P>
+
+Then:
+<pre>
+service firewall start
+</pre>
+
+
+<P>
+<h1> <strong>4. Setting up the IRLP Client Open VPN </strong></h1><P>
+
+Copy your key (client.ovpn) to the client via FTP etc.
+
+If you don't have openvpn installed on your client then install openvpn as root.<BR>
+For the latest Fedora/CentOS/RedHat version:<br>
+
+<pre>
+yum install openvpn  
+</pre>
+
+Or for Ubuntu/Debian:<br>
+
+<pre>
+apt-get install openvpn
+</pre>
+
+Then start the openvpn client as root:
+<pre>
+openvpn --config client.ovpn
+</pre>
+
+You have to open up another ssh/putty client into the machine to connect your IRLP somewhere via the command line.
+
+<p>
+
+See:
+<a href="https://openvpn.net/index.php/access-server/docs/admin-guides-sp-859543150/howto-connect-client-configuration/182-how-to-connect-to-access-server-with-linux-clients.html" target="_blank">https://openvpn.net/index.php/access-server/docs/admin-guides-sp-859543150/howto-connect-client-configuration/182-how-to-connect-to-access-server-with-linux-clients.html</a>
+
+
+Starting openvpn client at boot:
+
+<a href="https://www.raspberrypi.org/documentation/linux/usage/rc-local.md" target="_blank">https://www.raspberrypi.org/documentation/linux/usage/rc-local.md</a>
+
+
+To check what the IP address is via the command line:
+<pre>
+curl -s checkip.dyndns.org | sed -e 's/.*Current IP Address: //' -e 's/<.*$//'  
+</pre>
+
+Or:
+<pre>
+wget http://ipinfo.io/ip -qO -
+
+</pre>
+
+<hr><P>
+
+<h1><strong>Notes</strong></h1>
+
+
+<pre>
+From Dave, K5NX:
+
+Step by Step instructions to load your Own VPN client.conf file to your nano node
+
+1)      You’ll need to log into your Vcon control panel of your nano node on your own local network. You cannot do this process remote!
+
+2)      ( if you can’t do step 1 , please stop right here )
+
+3)      Once you have the home panel up then press menu B button  
+
+4)      Then press the Set VPN button
+
+5)      Press the STOP VPN button if its enabled
+
+6)      Make sure and have a copy of all client config files you wish to keep.
+
+7)      You’ll need to have a copy of the new Client Conf file loaded onto your desk top.
+
+8)      Make sure that the client conf file is named exactly this client.conf  , you may need to rename the file or the openvpn will not start up!
+
+9)      If your are absolutely sure about changing your client config file  (remember if you do this on a working vpn service , you do this at your own risk, we provide no support!)
+
+10)  NOW,  if your sure about proceeding, then  go ahead and push the DELETE ALL button
+
+11)  (With your nano node still connected to your local network)   on that  same previous page now hit the Browse button, you should see what ever files you have on that computer that’s being used to log into the nano node. Find the client.conf file that you should have already downloaded onto that pc’s desktop and double clip to create a path to the file. Once you see the path populated into the Browser box, then hit upload  
+
+12)  Now,  I recommend rebooting the nano node.
+
+13)   Once the node comes back up, you’ll need to do the rest right directly on the nano node touch screen panel,
+
+14)  Press the SYSTEM button
+
+15)  Press the NET  button
+
+16)  Press the enable vpn button
+
+17)  Hopefully you should be connected
+
+18)  Test with the test reflector 9999 and make sure you get voice coming back.
+
+</pre>
+
+<h1> <strong>Links</strong></h1>
+<li><a href="https://openvpn.net/"  target="_blank">OpenVPN Website</a><br>
+<li><a href="https://community.openvpn.net/openvpn/wiki/OpenVPNBridging" 
+target="_blank">Bridging in OpenVPN</a><br>
+<li><a href="http://www.cyberciti.biz/faq/howto-setup-openvpn-server-on-ubuntu-linux-14-04-or-16-04-lts/" target="_blank">How To Setup OpenVPN Server In 5 Minutes on Ubuntu Server</a><br>
+<LI> <a href="http://kd3su.crabdance.com/firewall">firewall file</a><br>
+
+
+<em>update-rc.d updates the System V style init script links /etc/rcrunlevel.d/NNname whose target is the script /etc/init.d/name. 
+These links are run by init when it changes runlevels; they are generally used to start and stop system services such as daemons</em>. <P>
+
+</html>
